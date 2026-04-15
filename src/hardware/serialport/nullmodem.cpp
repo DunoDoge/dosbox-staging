@@ -81,8 +81,12 @@ CNullModem::CNullModem(const uint8_t port_idx, CommandLine *cmd)
 				LOG_MSG("SERIAL: Port %" PRIu8 " inheritance "
 				        "socket handle: %d",
 				        GetPortNumber(), sock);
+#ifndef OHOS_PLATFORM
 				if (!ClientConnect(new TCPClientSocket(sock)))
 					return;
+#else
+				return; // TCP not available on OHOS
+#endif
 			} else {
 				LOG_MSG("SERIAL: Port %" PRIu8 " missing "
 				        "\"-socket\" parameter.",

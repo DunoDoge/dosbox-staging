@@ -6,6 +6,8 @@
 
 #include "midi_device.h"
 
+#if C_FLUIDSYNTH
+
 #include <atomic>
 #include <fluidsynth.h>
 #include <memory>
@@ -62,7 +64,7 @@ enum class SoundFont {
 	// Wen
 	//
 	// Ref:
-	// - https://www.polyphone.io/en/soundfonts/instrument-sets/250-fluidr3-gm
+	// - https://www.polyphone.io/en/soundfonts/instrument-sets/250-fluidr3-gm-gs
 	// - https://archive.org/download/fluidr3-gm-gs
 	//
 	FluidR3,
@@ -150,5 +152,14 @@ private:
 };
 
 void FSYNTH_ListDevices(MidiDeviceFluidSynth* device, MoreOutputStrings& output);
+
+#else // !C_FLUIDSYNTH
+
+// Forward declaration when FluidSynth is disabled
+class MidiDeviceFluidSynth;
+class MoreOutputStrings;
+inline void FSYNTH_ListDevices(MidiDeviceFluidSynth*, MoreOutputStrings&) {}
+
+#endif // C_FLUIDSYNTH
 
 #endif // DOSBOX_FLUIDSYNTH_H

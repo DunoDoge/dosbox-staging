@@ -1,6 +1,8 @@
 //  SPDX-FileCopyrightText:  2020-2026 The DOSBox Staging Team
 //  SPDX-License-Identifier: GPL-2.0-or-later
 
+#if C_FLUIDSYNTH
+
 #include "private/fluidsynth.h"
 
 #include <bitset>
@@ -1336,3 +1338,5 @@ void FSYNTH_AddConfigSection(const ConfigPtr& conf)
 	init_fluidsynth_config_settings(*section);
 	register_fluidsynth_text_messages();
 }
+
+#endif // C_FLUIDSYNTH

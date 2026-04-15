@@ -16,9 +16,12 @@
 #include "shader_common.h"
 #include "utils/rect.h"
 
+#include <SDL.h>
+
+#if C_OPENGL
+
 // Glad must be included before SDL
 #include "glad/gl.h"
-#include <SDL.h>
 #include <SDL_opengl.h>
 
 struct ShaderPass {
@@ -138,5 +141,39 @@ private:
 
 	void UpdateMainShaderPassUniforms();
 };
+
+#else // !C_OPENGL
+
+// Minimal stub when OpenGL is disabled
+struct ShaderPass {
+	std::string ToString() const;
+};
+
+class ShaderPipeline {
+public:
+	ShaderPipeline() {}
+	~ShaderPipeline() {}
+
+	bool IsPipelineComplete() const { return false; }
+
+	void NotifyRenderSizeChanged(int, int, unsigned int) {}
+	void NotifyViewportSizeChanged(const DosBox::Rect&) {}
+	void NotifyVideoModeChanged(const VideoMode&) {}
+
+	void SetMainShader(const Shader&) {}
+	void SetMainShaderPreset(const ShaderPreset&) {}
+
+	void SetColorSpace(ColorSpace) {}
+	void EnableImageAdjustments(bool) {}
+	void SetImageAdjustmentSettings(const ImageAdjustmentSettings&) {}
+	void SetDeditheringStrength(float) {}
+
+	void Render(unsigned int) const {}
+
+	ShaderPipeline(const ShaderPipeline&) = delete;
+	ShaderPipeline& operator=(const ShaderPipeline&) = delete;
+};
+
+#endif // C_OPENGL
 
 #endif // DOSBOX_SHADER_PIPELINE_H

@@ -4,6 +4,10 @@
 
 #include "mem.h"
 
+#ifdef OHOS_PLATFORM
+#include "ohos_std_compat.h"
+#endif
+
 #include "cpu/callback.h"
 #include "cpu/cpu.h"
 #include "cpu/registers.h"

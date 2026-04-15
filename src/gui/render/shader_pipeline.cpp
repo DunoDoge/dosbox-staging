@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText:  2025-2026 The DOSBox Staging Team
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#if C_OPENGL
+
 #include "private/shader_pipeline.h"
 
 #include "gui/render/private/shader_manager.h"
@@ -647,3 +649,5 @@ void ShaderPipeline::UpdateDeditherPassUniforms()
 		shader.SetUniform1f("CD_ADJUST_VIEW", 0.0f);
 	}
 }
+
+#endif // C_OPENGL

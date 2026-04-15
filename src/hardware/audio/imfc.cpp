@@ -5181,6 +5181,9 @@ public:
 
 #include "imfc_rom.c"
 
+static int SDLCALL imfMainThreadStart(void* data);
+static int SDLCALL imfInterruptThreadStart(void* data);
+
 class MusicFeatureCard {
 private:
 	ym2151_device m_ya2151;
@@ -13032,16 +13035,6 @@ public:
 		        irq);
 	}
 
-	static int SDLCALL imfMainThreadStart(void* data)
-	{
-		return ((MusicFeatureCard*)data)->threadMainStart();
-	}
-
-	static int SDLCALL imfInterruptThreadStart(void* data)
-	{
-		return ((MusicFeatureCard*)data)->threadInterruptStart();
-	}
-
 	int threadMainStart()
 	{
 		log_debug("IMFC: processor main thread started");
@@ -13234,6 +13227,16 @@ public:
 	}
 };
 
+static int SDLCALL imfMainThreadStart(void* data)
+{
+	return ((MusicFeatureCard*)data)->threadMainStart();
+}
+
+static int SDLCALL imfInterruptThreadStart(void* data)
+{
+	return ((MusicFeatureCard*)data)->threadInterruptStart();
+}
+
 void MusicFeatureCard::RegisterIoHandlers(const io_port_t port)
 {
 	using namespace std::placeholders;
@@ -13253,57 +13256,57 @@ void MusicFeatureCard::RegisterIoHandlers(const io_port_t port)
 	assert(readHandlers.size() == NumIoHandlers);
 	assert(writeHandlers.size() == NumIoHandlers);
 
-	auto read_piu0 = std::bind(&MusicFeatureCard::readPortPIU0, this, _1, _2);
+	auto read_piu0 = [this](io_port_t port, io_width_t width) -> io_val_t { return m_piuPC.readPortPIU0(); };
 	readHandlers.at(0).Install(port_piu0, read_piu0, io_width_t::byte);
 
-	auto write_piu0 = std::bind(&MusicFeatureCard::writePortPIU0, this, _1, _2, _3);
+	auto write_piu0 = [this](io_port_t port, io_val_t val, io_width_t width) -> void { m_piuPC.writePortPIU0(static_cast<uint8_t>(val)); };
 	writeHandlers.at(0).Install(port_piu0, write_piu0, io_width_t::byte);
 
-	auto read_piu1 = std::bind(&MusicFeatureCard::readPortPIU1, this, _1, _2);
+	auto read_piu1 = [this](io_port_t port, io_width_t width) -> io_val_t { return m_piuPC.readPortPIU1(); };
 	readHandlers.at(1).Install(port_piu1, read_piu1, io_width_t::byte);
 
-	auto write_piu1 = std::bind(&MusicFeatureCard::writePortPIU1, this, _1, _2, _3);
+	auto write_piu1 = [this](io_port_t port, io_val_t val, io_width_t width) -> void { m_piuPC.writePortPIU1(static_cast<uint8_t>(val)); };
 	writeHandlers.at(1).Install(port_piu1, write_piu1, io_width_t::byte);
 
-	auto read_piu2 = std::bind(&MusicFeatureCard::readPortPIU2, this, _1, _2);
+	auto read_piu2 = [this](io_port_t port, io_width_t width) -> io_val_t { return m_piuPC.readPortPIU2(); };
 	readHandlers.at(2).Install(port_piu2, read_piu2, io_width_t::byte);
 
-	auto write_piu2 = std::bind(&MusicFeatureCard::writePortPIU2, this, _1, _2, _3);
+	auto write_piu2 = [this](io_port_t port, io_val_t val, io_width_t width) -> void { m_piuPC.writePortPIU2(static_cast<uint8_t>(val)); };
 	writeHandlers.at(2).Install(port_piu2, write_piu2, io_width_t::byte);
 
-	auto read_pcr = std::bind(&MusicFeatureCard::readPortPCR, this, _1, _2);
+	auto read_pcr = [this](io_port_t port, io_width_t width) -> io_val_t { return readPortPCR(port, width); };
 	readHandlers.at(3).Install(port_pcr, read_pcr, io_width_t::byte);
 
-	auto write_pcr = std::bind(&MusicFeatureCard::writePortPCR, this, _1, _2, _3);
+	auto write_pcr = [this](io_port_t port, io_val_t val, io_width_t width) -> void { writePortPCR(port, val, width); };
 	writeHandlers.at(3).Install(port_pcr, write_pcr, io_width_t::byte);
 
-	auto read_cntr0 = std::bind(&MusicFeatureCard::readPortCNTR0, this, _1, _2);
+	auto read_cntr0 = [this](io_port_t port, io_width_t width) -> io_val_t { return readPortCNTR0(port, width); };
 	readHandlers.at(4).Install(port_cntr0, read_cntr0, io_width_t::byte);
 
-	auto write_cntr0 = std::bind(&MusicFeatureCard::writePortCNTR0, this, _1, _2, _3);
+	auto write_cntr0 = [this](io_port_t port, io_val_t val, io_width_t width) -> void { writePortCNTR0(port, val, width); };
 	writeHandlers.at(4).Install(port_cntr0, write_cntr0, io_width_t::byte);
 
-	auto read_cntr1 = std::bind(&MusicFeatureCard::readPortCNTR1, this, _1, _2);
+	auto read_cntr1 = [this](io_port_t port, io_width_t width) -> io_val_t { return readPortCNTR1(port, width); };
 	readHandlers.at(5).Install(port_cntr1, read_cntr1, io_width_t::byte);
 
-	auto write_cntr1 = std::bind(&MusicFeatureCard::writePortCNTR1, this, _1, _2, _3);
+	auto write_cntr1 = [this](io_port_t port, io_val_t val, io_width_t width) -> void { writePortCNTR1(port, val, width); };
 	writeHandlers.at(5).Install(port_cntr1, write_cntr1, io_width_t::byte);
 
-	auto read_cntr2 = std::bind(&MusicFeatureCard::readPortCNTR2, this, _1, _2);
+	auto read_cntr2 = [this](io_port_t port, io_width_t width) -> io_val_t { return readPortCNTR2(port, width); };
 	readHandlers.at(6).Install(port_cntr2, read_cntr2, io_width_t::byte);
 
-	auto write_cntr2 = std::bind(&MusicFeatureCard::writePortCNTR2, this, _1, _2, _3);
+	auto write_cntr2 = [this](io_port_t port, io_val_t val, io_width_t width) -> void { writePortCNTR2(port, val, width); };
 	writeHandlers.at(6).Install(port_cntr2, write_cntr2, io_width_t::byte);
 
-	auto read_tcwr = std::bind(&MusicFeatureCard::readPortTCWR, this, _1, _2);
+	auto read_tcwr = [this](io_port_t port, io_width_t width) -> io_val_t { return readPortTCWR(port, width); };
 	readHandlers.at(7).Install(port_tcwr, read_tcwr, io_width_t::byte);
 
-	auto write_tcwr = std::bind(&MusicFeatureCard::writePortTCWR, this, _1, _2, _3);
+	auto write_tcwr = [this](io_port_t port, io_val_t val, io_width_t width) -> void { writePortTCWR(port, val, width); };
 	writeHandlers.at(7).Install(port_tcwr, write_tcwr, io_width_t::byte);
 
 	// ports [+C],[+D],[+E],[+F] all map to the TSR
-	auto read_tcr = std::bind(&MusicFeatureCard::readPortTCR, this, _1, _2);
-	auto write_tcr = std::bind(&MusicFeatureCard::writePortTCR, this, _1, _2, _3);
+	auto read_tcr = [this](io_port_t port, io_width_t width) -> io_val_t { return readPortTCR(port, width); };
+	auto write_tcr = [this](io_port_t port, io_val_t val, io_width_t width) -> void { writePortTCR(port, val, width); };
 	for (io_port_t i = 0; i < 4; i++) {
 		readHandlers.at(8 + i).Install(port_tcr + i, read_tcr, io_width_t::byte);
 		writeHandlers.at(8 + i).Install(port_tcr + i,
@@ -13312,8 +13315,8 @@ void MusicFeatureCard::RegisterIoHandlers(const io_port_t port)
 	}
 
 	// ports [+8],[+9],[+A],[+B] all map to the TCR
-	auto read_tsr = std::bind(&MusicFeatureCard::readPortTSR, this, _1, _2);
-	auto write_tsr = std::bind(&MusicFeatureCard::writePortTSR, this, _1, _2, _3);
+	auto read_tsr = [this](io_port_t port, io_width_t width) -> io_val_t { return readPortTSR(port, width); };
+	auto write_tsr = [this](io_port_t port, io_val_t val, io_width_t width) -> void { writePortTSR(port, val, width); };
 	for (io_port_t i = 0; i < 4; i++) {
 		readHandlers.at(12 + i).Install(port_tsr + i,
 		                                read_tsr,

@@ -29,7 +29,9 @@
 #ifndef ASIO_STANDALONE
 #define ASIO_STANDALONE
 #endif
+#ifndef OHOS_PLATFORM
 #include <asio.hpp>
+#endif
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -150,6 +152,7 @@ private:
 	std::queue<uint8_t> receiveBuffer = {};
 };
 
+#ifndef OHOS_PLATFORM
 // --- TCP NET INTERFACE (Asio) ---------------------------------------------
 
 class TCPClientSocket : public NETClientSocket {
@@ -192,5 +195,6 @@ private:
 	std::shared_ptr<asio::io_context> io = {};
 	asio::ip::tcp::acceptor acceptor;
 };
+#endif // !OHOS_PLATFORM
 
 #endif // DOSBOX_MISC_UTIL_H

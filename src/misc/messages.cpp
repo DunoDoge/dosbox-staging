@@ -25,6 +25,8 @@
 #include <string>
 #include <unordered_map>
 
+#include <ohos_std_compat.h>
+
 CHECK_NARROWING();
 
 static const std::string MsgNotFound = " MESSAGE NOT FOUND! ";

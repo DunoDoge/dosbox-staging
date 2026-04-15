@@ -2,6 +2,8 @@
 // SPDX-FileCopyrightText:  2002-2021 The DOSBox Team
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#if C_IPX
+
 #include "dosbox.h"
 
 #include "hardware/network/ipx.h"
@@ -1299,3 +1301,5 @@ void IPX_AddConfigSection([[maybe_unused]] const ConfigPtr& conf)
 
 // Initialize static members;
 uint16_t IPX::dospage = 0;
+
+#endif // C_IPX

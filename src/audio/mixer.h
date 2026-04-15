@@ -20,6 +20,10 @@
 
 #include <Iir.h>
 
+#if C_SPEEXDSP
+#include <speex/speex_resampler.h>
+#endif
+
 #include "private/envelope.h"
 #include "private/noise_gate.h"
 
@@ -149,9 +153,11 @@ enum class ChorusPreset { None, Light, Normal, Strong };
 
 constexpr auto DefaultChorusPreset = ChorusPreset::Normal;
 
-// forward declarations
-struct SpeexResamplerState_;
-typedef SpeexResamplerState_ SpeexResamplerState;
+// forward declarations - SpeexResamplerState is defined in speex_resampler.h
+// or stubbed in mixer.cpp when C_SPEEXDSP is 0
+#if !C_SPEEXDSP
+typedef struct SpeexResamplerState_ SpeexResamplerState;
+#endif
 
 class MixerChannel {
 public:

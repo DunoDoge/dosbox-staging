@@ -7,6 +7,10 @@
 #include "cdrom.h"
 #include "cdrom_mds.h"
 
+#ifdef OHOS_PLATFORM
+#include "ohos_std_compat.h"
+#endif
+
 #include <cassert>
 #include <cctype>
 #include <chrono>

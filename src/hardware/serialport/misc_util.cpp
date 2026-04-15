@@ -33,7 +33,9 @@ NETClientSocket* NETClientSocket::NETClientFactory(const SocketType socketType,
                                                    const uint16_t port)
 {
 	switch (socketType) {
+#ifndef OHOS_PLATFORM
 	case SocketType::Tcp: return new TCPClientSocket(destination, port);
+#endif
 	case SocketType::Enet: return new ENETClientSocket(destination, port);
 	default: return nullptr;
 	}
@@ -90,7 +92,9 @@ NETServerSocket* NETServerSocket::NETServerFactory(const SocketType socketType,
                                                    const uint16_t port)
 {
 	switch (socketType) {
+#ifndef OHOS_PLATFORM
 	case SocketType::Tcp: return new TCPServerSocket(port);
+#endif
 	case SocketType::Enet: return new ENETServerSocket(port);
 	default: return nullptr;
 	}
@@ -473,6 +477,7 @@ void ENETClientSocket::updateState()
 #endif
 }
 
+#ifndef OHOS_PLATFORM
 // --- TCP NET INTERFACE -----------------------------------------------------
 
 static void setup_tcp_socket(asio::ip::tcp::socket& socket)
@@ -666,3 +671,4 @@ NETClientSocket* TCPServerSocket::Accept()
 	}
 	return new TCPClientSocket(std::move(new_socket), io);
 }
+#endif // !OHOS_PLATFORM

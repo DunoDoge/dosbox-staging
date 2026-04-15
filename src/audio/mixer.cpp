@@ -12,7 +12,25 @@
 #include <optional>
 #include <sys/types.h>
 
+#if C_SPEEXDSP
 #include <speex/speex_resampler.h>
+#else
+// Stub implementations when SpeexDSP is not available
+// SpeexResamplerState_ is forward-declared in mixer.h; provide empty definition here
+typedef uint32_t spx_uint32_t;
+typedef int32_t spx_int32_t;
+// SpeexResamplerState is already typedef'd in mixer.h as SpeexResamplerState_
+// Provide the struct definition here
+struct SpeexResamplerState_ {};
+static inline SpeexResamplerState* speex_resampler_init(spx_uint32_t, spx_uint32_t, spx_uint32_t, int, int*) { return nullptr; }
+static inline void speex_resampler_destroy(SpeexResamplerState*) {}
+static inline int speex_resampler_set_rate(SpeexResamplerState*, spx_uint32_t, spx_uint32_t) { return 0; }
+static inline void speex_resampler_get_ratio(SpeexResamplerState*, spx_uint32_t*, spx_uint32_t*) {}
+static inline int speex_resampler_process_interleaved_float(SpeexResamplerState*, const float*, spx_uint32_t*, float*, spx_uint32_t*) { return 0; }
+static inline void speex_resampler_reset_mem(SpeexResamplerState*) {}
+static inline int speex_resampler_skip_zeros(SpeexResamplerState*) { return 0; }
+static inline spx_uint32_t speex_resampler_get_input_latency(SpeexResamplerState*) { return 0; }
+#endif
 
 #include "mverb/MVerb.h"
 #include "tal-chorus/ChorusEngine.h"
@@ -2251,14 +2269,14 @@ void MixerChannel::AddSamples(const int num_frames, const Type* data)
 		if (filters.highpass.state == FilterState::On) {
 			auto& hpf = filters.highpass.hpf;
 
-			audio_frames[i] = {hpf[0].filter(audio_frames[i].left),
-			                   hpf[1].filter(audio_frames[i].right)};
+			audio_frames[i] = AudioFrame(static_cast<float>(hpf[0].filter(audio_frames[i].left)),
+			                             static_cast<float>(hpf[1].filter(audio_frames[i].right)));
 		}
 		if (filters.lowpass.state == FilterState::On) {
 			auto& lpf = filters.lowpass.lpf;
 
-			audio_frames[i] = {lpf[0].filter(audio_frames[i].left),
-			                   lpf[1].filter(audio_frames[i].right)};
+			audio_frames[i] = AudioFrame(static_cast<float>(lpf[0].filter(audio_frames[i].left)),
+			                             static_cast<float>(lpf[1].filter(audio_frames[i].right)));
 		}
 
 		if (do_crossfeed) {
@@ -2479,7 +2497,8 @@ static void mix_samples(const int frames_requested)
 	// Apply high-pass filter to the master output
 	for (auto& frame : mixer.output_buffer) {
 		auto& hpf = mixer.highpass_filter;
-		frame = {hpf[0].filter(frame.left), hpf[1].filter(frame.right)};
+		frame = AudioFrame(static_cast<float>(hpf[0].filter(frame.left)),
+		                   static_cast<float>(hpf[1].filter(frame.right)));
 	}
 
 	// Apply master gain

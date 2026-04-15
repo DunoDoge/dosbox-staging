@@ -12,7 +12,9 @@
 #include <memory>
 #include <string>
 
+#if C_FLUIDSYNTH
 #include "private/fluidsynth.h"
+#endif
 #include "private/midi_device.h"
 #include "private/mt32.h"
 #include "private/soundcanvas.h"
@@ -86,9 +88,11 @@ static std::unique_ptr<MidiDevice> create_device(
 		return std::make_unique<MidiDeviceSoundCanvas>();
 	}
 	// namespace prefix required to avoid ambiguity with FluidSynth namespace
+#if C_FLUIDSYNTH
 	if (name == MidiDeviceName::FluidSynth) {
 		return std::make_unique<MidiDeviceFluidSynth>();
 	}
+#endif
 #if C_MT32EMU
 	if (name == Mt32) {
 		return std::make_unique<MidiDeviceMt32>();
@@ -690,6 +694,7 @@ void MIDI_ListDevices(MoreOutputStrings& output)
 	                                : nullptr,
 	                        output);
 
+#if C_FLUIDSYNTH
 	write_device_name(MidiDeviceName::FluidSynth);
 
 	FSYNTH_ListDevices((device_name == MidiDeviceName::FluidSynth)
@@ -697,6 +702,7 @@ void MIDI_ListDevices(MoreOutputStrings& output)
 	                           : nullptr,
 
 	                   output);
+#endif
 #if C_COREMIDI
 	write_device_name(MidiDeviceName::CoreMidi);
 
@@ -824,10 +830,12 @@ static void init_mididevice_settings(SectionProp& secprop)
 	                        "                plugin that implements the Sound Canvas to be available;\n"
 	                        "                see the [soundcanvas] section).\n");
 
+#if C_FLUIDSYNTH
 	str_prop->SetOptionHelp(MidiDeviceName::FluidSynth,
 	                        "  fluidsynth:   The internal FluidSynth MIDI synthesizer (SoundFont player)\n"
 	                        "                (requires the FluidSynth dynamic-link library to be available;\n"
 	                        "                see the [fluidsynth] section).\n");
+#endif
 
 	str_prop->SetOptionHelp("none", "  none:         Disable MIDI output.");
 
@@ -840,7 +848,9 @@ static void init_mididevice_settings(SectionProp& secprop)
 	                     MidiDeviceName::Mt32,
 	                     MidiDeviceName::SoundCanvas,
 #endif
+#if C_FLUIDSYNTH
 	                     MidiDeviceName::FluidSynth,
+#endif
 	                     "none"});
 
 	str_prop->SetDeprecatedWithAlternateValue("alsa", DefaultMidiDevicePref);

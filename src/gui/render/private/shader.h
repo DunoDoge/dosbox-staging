@@ -4,6 +4,8 @@
 #ifndef DOSBOX_SHADER_H
 #define DOSBOX_SHADER_H
 
+#if C_OPENGL
+
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -42,5 +44,19 @@ private:
 
 	GLint GetUniformLocation(const std::string& name) const;
 };
+
+#else // !C_OPENGL
+
+#include <string>
+#include "shader_common.h"
+
+struct Shader {
+	ShaderInfo info       = {};
+	int program_object    = 0;
+
+	bool BuildShaderProgram(const std::string& source) { return false; }
+};
+
+#endif // C_OPENGL
 
 #endif // DOSBOX_SHADER_H

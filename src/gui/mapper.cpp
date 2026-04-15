@@ -446,7 +446,15 @@ public:
 
 	bool CheckEvent(SDL_Event * event) override {
 		if (event->type!=SDL_KEYDOWN && event->type!=SDL_KEYUP) return false;
+		if (!lists) {
+			LOG_WARNING("MAPPER: CKeyBindGroup::CheckEvent called with lists=NULL, bindgroups size=%d", (int)bindgroups.size());
+			return false;
+		}
 		auto key = static_cast<uintptr_t>(event->key.keysym.scancode);
+		if (key >= keys) {
+			LOG_WARNING("MAPPER: CKeyBindGroup::CheckEvent scancode=%d out of range (keys=%d)", (int)key, (int)keys);
+			return false;
+		}
 		if (event->type==SDL_KEYDOWN) ActivateBindList(&lists[key],0x7fff,true);
 		else DeactivateBindList(&lists[key],true);
 		return 0;
@@ -2903,6 +2911,7 @@ static void ClearBindGroups()
 
 static void CreateBindGroups()
 {
+	LOG_INFO("MAPPER: CreateBindGroups called, bindgroups size=%d", (int)bindgroups.size());
 	auto key_bind_group = new CKeyBindGroup(SDL_NUM_SCANCODES);
 	keybindgroups.push_back(key_bind_group);
 
@@ -3200,6 +3209,7 @@ static bool should_skip_unchanged_titlebar(const SectionProp* section)
 
 void MAPPER_BindKeys(Section* sec)
 {
+	LOG_INFO("MAPPER: MAPPER_BindKeys called");
 	const auto section = static_cast<const SectionProp*>(sec);
 	if (should_skip_unchanged_titlebar(section)) {
 		return;

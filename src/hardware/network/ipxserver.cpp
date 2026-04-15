@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText:  2002-2021 The DOSBox Team
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#if C_IPX
+
 #include "dosbox.h"
 
 #include "hardware/network/ipxserver.h"
@@ -289,3 +291,5 @@ bool IPX_StartServer(uint16_t portnum)
 
 	return true;
 }
+
+#endif // C_IPX

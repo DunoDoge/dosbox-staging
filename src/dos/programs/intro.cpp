@@ -127,18 +127,18 @@ void INTRO::AddMessages() {
 		"\n"
 		);
 	MSG_Add("PROGRAM_INTRO_MOUNT_WINDOWS",
-		"[bgcolor=blue][color=white]╔═════════════════════════════════════════════════════════════════════════╗\n"
-		"║ [color=light-green]mount c c:\\dosgames\\ [color=white]will create a C drive with c:\\dosgames as contents.║\n"
-		"║                                                                         ║\n"
-		"║ [color=light-green]c:\\dosgames\\ [color=white]is an example. Replace it with your own games directory.   ║\n"
-		"╚═════════════════════════════════════════════════════════════════════════╝[reset]\n"
+		"[bgcolor=blue][color=white]+-------------------------------------------------------------------------+\n"
+		"| [color=light-green]mount c c:\\dosgames\\ [color=white]will create a C drive with c:\\dosgames as contents.|\n"
+		"|                                                                         |\n"
+		"| [color=light-green]c:\\dosgames\\ [color=white]is an example. Replace it with your own games directory.   |\n"
+		"+-------------------------------------------------------------------------+[reset]\n"
 		);
 	MSG_Add("PROGRAM_INTRO_MOUNT_OTHER",
-		"[bgcolor=blue][color=white]╔══════════════════════════════════════════════════════════════════════╗\n"
-		"║ [color=light-green]mount c ~/dosgames[color=white] will create a C drive with ~/dosgames as contents.║\n"
-		"║                                                                      ║\n"
-		"║ [color=light-green]~/dosgames[color=white] is an example. Replace it with your own games directory.  ║\n"
-		"╚══════════════════════════════════════════════════════════════════════╝[reset]\n"
+		"[bgcolor=blue][color=white]+----------------------------------------------------------------------+\n"
+		"| [color=light-green]mount c ~/dosgames[color=white] will create a C drive with ~/dosgames as contents.|\n"
+		"|                                                                      |\n"
+		"| [color=light-green]~/dosgames[color=white] is an example. Replace it with your own games directory.  |\n"
+		"+----------------------------------------------------------------------+[reset]\n"
 		);
 	MSG_Add("PROGRAM_INTRO_MOUNT_END",
 		"After successfully mounting the disk you can type [color=light-blue]c:[reset] to go to your freshly\n"

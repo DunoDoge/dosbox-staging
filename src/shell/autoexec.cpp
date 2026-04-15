@@ -4,6 +4,10 @@
 
 #include "shell/autoexec.h"
 
+#ifdef OHOS_PLATFORM
+#include "ohos_std_compat.h"
+#endif
+
 #include "utils/checks.h"
 #include "config/config.h"
 #include "dosbox.h"
