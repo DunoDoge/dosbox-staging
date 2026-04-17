@@ -3011,6 +3011,11 @@ void MAPPER_Run(bool pressed) {
 SDL_Surface* SDL_SetVideoMode_Wrap(int width,int height,int bpp,uint32_t flags);
 
 void MAPPER_DisplayUI() {
+#ifdef OHOS_PLATFORM
+	LOG_INFO("MAPPER: Mapper UI is not supported on HarmonyOS platform.");
+	return;
+#endif
+
 	MOUSE_NotifyTakeOver(true);
 
 	// The mapper is about to take-over SDL's surface and rendering
@@ -3025,8 +3030,11 @@ void MAPPER_DisplayUI() {
 	mapper.window = GFX_GetWindow();
 
 	if (mapper.window == nullptr) {
-		E_Exit("MAPPER: Could not initialize video mode: %s",
-		       SDL_GetError());
+		LOG_ERR("MAPPER: Could not initialize video mode: %s. Mapper UI disabled.",
+		        SDL_GetError());
+		MIXER_UnlockMixerThread();
+		MOUSE_NotifyTakeOver(false);
+		return;
 	}
 	mapper.renderer = SDL_GetRenderer(mapper.window);
 
@@ -3035,22 +3043,29 @@ void MAPPER_DisplayUI() {
 	if (!mapper.renderer) {
 		context = SDL_GL_GetCurrentContext();
 		if (!context) {
-			E_Exit("MAPPER: Failed to retrieve current OpenGL context: %s",
-			       SDL_GetError());
+			LOG_ERR("MAPPER: Failed to retrieve current OpenGL context: %s. Mapper UI disabled.",
+			        SDL_GetError());
+			MIXER_UnlockMixerThread();
+			MOUSE_NotifyTakeOver(false);
+			return;
 		}
 
 		const auto renderer_drivers_count = SDL_GetNumRenderDrivers();
 		if (renderer_drivers_count <= 0) {
-			E_Exit("MAPPER: Failed to retrieve available SDL renderer drivers: %s",
-			       SDL_GetError());
+			LOG_ERR("MAPPER: Failed to retrieve available SDL renderer drivers: %s. Mapper UI disabled.",
+			        SDL_GetError());
+			MIXER_UnlockMixerThread();
+			MOUSE_NotifyTakeOver(false);
+			return;
 		}
 
 		int renderer_driver_index = -1;
 		for (int i = 0; i < renderer_drivers_count; ++i) {
 			SDL_RendererInfo renderer_info = {};
 			if (SDL_GetRenderDriverInfo(i, &renderer_info) < 0) {
-				E_Exit("MAPPER: Failed to retrieve SDL renderer driver info: %s",
-				       SDL_GetError());
+				LOG_ERR("MAPPER: Failed to retrieve SDL renderer driver info: %s",
+				        SDL_GetError());
+				continue;
 			}
 			assert(renderer_info.name);
 			if (strcmp(renderer_info.name, "opengl") == 0) {
@@ -3060,7 +3075,10 @@ void MAPPER_DisplayUI() {
 		}
 
 		if (renderer_driver_index == -1) {
-			E_Exit("MAPPER: OpenGL support in SDL renderer is unavailable but required for OpenGL output");
+			LOG_ERR("MAPPER: OpenGL support in SDL renderer is unavailable but required for OpenGL output. Mapper UI disabled.");
+			MIXER_UnlockMixerThread();
+			MOUSE_NotifyTakeOver(false);
+			return;
 		}
 
 		// Since our OpenGL renderer started requesting a version 3.3 context,
@@ -3081,8 +3099,11 @@ void MAPPER_DisplayUI() {
 	}
 #endif
 	if (mapper.renderer == nullptr) {
-		E_Exit("MAPPER: Could not retrieve window renderer: %s",
-		       SDL_GetError());
+		LOG_ERR("MAPPER: Could not retrieve window renderer: %s. Mapper UI disabled.",
+		        SDL_GetError());
+		MIXER_UnlockMixerThread();
+		MOUSE_NotifyTakeOver(false);
+		return;
 	}
 
 	if (SDL_RenderSetLogicalSize(mapper.renderer, 640, 480) < 0) {
@@ -3095,7 +3116,10 @@ void MAPPER_DisplayUI() {
 	        int10_font_14, 8, 256 * 14, 1, 1, 0, 0, 0, 0);
 
 	if (atlas_surface == nullptr) {
-		E_Exit("MAPPER: Failed to create atlas surface: %s", SDL_GetError());
+		LOG_ERR("MAPPER: Failed to create atlas surface: %s. Mapper UI disabled.", SDL_GetError());
+		MIXER_UnlockMixerThread();
+		MOUSE_NotifyTakeOver(false);
+		return;
 	}
 
 	// Invert default surface palette

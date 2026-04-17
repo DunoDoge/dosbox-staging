@@ -18,6 +18,10 @@
 
 #include "private/common.h"
 
+#ifdef __OHOS__
+#include "sdl_ohos.h"
+#endif
+
 #include "audio/mixer.h"
 #include "capture/capture.h"
 #include "config/config.h"
@@ -158,7 +162,19 @@ bool GFX_HaveDesktopEnvironment()
 
 SDL_Window* GFX_GetWindow()
 {
-	return sdl.window;
+	if (sdl.window) {
+		return sdl.window;
+	}
+
+#ifdef __OHOS__
+	SDL_Window* ohos_window = SDL_OHOS_GetWindow();
+	if (ohos_window) {
+		LOG_WARNING("SDL: GFX_GetWindow() falling back to OHOS global window");
+		return ohos_window;
+	}
+#endif
+
+	return nullptr;
 }
 
 double GFX_GetHostRefreshRate()
