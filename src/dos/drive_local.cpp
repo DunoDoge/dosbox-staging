@@ -293,6 +293,8 @@ bool localDrive::FindFirst(const char* _dir, DOS_DTA& dta, bool fcb_findfirst)
 		safe_strcat(tempDir, end);
 	}
 
+	dirCache.CacheOut(tempDir);
+
 	uint16_t id;
 	if (!dirCache.FindFirst(tempDir,id)) {
 		DOS_SetError(DOSERR_PATH_NOT_FOUND);
