@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "private/common.h"
+#include "dosbox_bridge.h"
 
 #include "config/config.h"
 #include "config/setup.h"
@@ -445,6 +446,7 @@ void TITLEBAR_NotifyProgramName(const std::string& segment_name,
 void TITLEBAR_NotifyCyclesChanged()
 {
 	TITLEBAR_RefreshTitle();
+	DosBoxBridge::Instance().NotifyCpuCyclesChanged(DosBoxBridge::Instance().GetCpuCycles());
 }
 
 void GFX_SetMouseHint(const MouseHint hint_id)
