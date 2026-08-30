@@ -365,6 +365,7 @@ endif()
 option(OPT_SDL3_IMAGE "Enable SDL3_image (ShowPic image viewer program)" ON)
 if (OPT_SDL3_IMAGE)
   find_package(SDL3_image CONFIG REQUIRED)
+  set(C_SDL3_IMAGE ON)
 endif()
 
 option(OPT_OPUS "Enable the Opus audio decoder (CD-DA Opus tracks)" ON)
@@ -519,10 +520,17 @@ elseif (DOSBOX_PLATFORM_LINUX)
 endif()
 set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
 
-# Find common external dependencies
-find_package(SDL3 REQUIRED CONFIG REQUIRED COMPONENTS SDL3)
-find_package(iir REQUIRED)
-find_package(PNG REQUIRED)
+# Find common external dependencies. In embed mode the hosting
+# application may provide SDL3/iir as in-tree CMake targets (built via
+# add_subdirectory) instead of installed packages; skip find_package in
+# that case.
+if (NOT TARGET SDL3::SDL3)
+  find_package(SDL3 REQUIRED CONFIG REQUIRED COMPONENTS SDL3)
+endif()
+if (NOT TARGET iir::iir_static)
+  find_package(iir REQUIRED)
+endif()
+find_package(PNG REQUIRED CONFIG)
 if (OPT_OPENGL)
   find_package(OpenGL REQUIRED)
 endif()

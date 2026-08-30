@@ -4,7 +4,9 @@ if (DOSBOX_OHOS_EMBED)
   # which render backend to instantiate. The input mapper and the render
   # pipeline stay part of the engine.
   target_sources(dosboxcommon PRIVATE
+    clipboard.cpp
     mapper.cpp
+    titlebar.cpp
 
     render/auto_image_adjustments.cpp
     render/auto_shader_switcher.cpp

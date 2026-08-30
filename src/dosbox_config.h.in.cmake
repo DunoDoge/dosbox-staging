@@ -86,6 +86,9 @@
 // Define to 1 to enable the Opus audio decoder (CD-DA Opus tracks)
 #cmakedefine01 C_OPUS
 
+// Define to 1 to enable the SDL3_image-based ShowPic program
+#cmakedefine01 C_SDL3_IMAGE
+
 // Define to 1 to enable mouse mapping support
 #cmakedefine01 C_MANYMOUSE
 

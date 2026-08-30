@@ -12,6 +12,14 @@
 #include <optional>
 #include <sys/types.h>
 
+// Match the standalone speex resampler build of the OHOS embed
+// (see the embedder's speexdsp-shim): symbols are renamed via RANDOM_PREFIX.
+#ifndef OUTSIDE_SPEEX
+#define OUTSIDE_SPEEX
+#endif
+#ifndef RANDOM_PREFIX
+#define RANDOM_PREFIX dosbox_staging
+#endif
 #include <speex/speex_resampler.h>
 
 #include "mverb/MVerb.h"

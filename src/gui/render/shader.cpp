@@ -3,6 +3,15 @@
 
 #include "private/shader.h"
 
+#if !C_OPENGL
+// Without OpenGL the shader pipeline is inactive; keep the symbol
+// so non-GL embeds link (it is never called at runtime).
+bool Shader::BuildShaderProgram(const std::string& shader_source)
+{
+	(void)shader_source;
+	return false;
+}
+#else
 #if C_OPENGL
 
 // Build a OpenGL shader program.
@@ -204,3 +213,5 @@ void Shader::SetUniform3f(const std::string& name, const float val1,
 }
 
 #endif
+
+#endif // !C_OPENGL
