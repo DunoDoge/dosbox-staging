@@ -501,7 +501,7 @@ bool Message::IsImportantHelp(const std::string& message_key)
 		const auto interior = std::string_view(message_key).substr(
 			prefix_length, suffix_position - prefix_length);
 
-		return std::ranges::count(interior, '_') == 0;
+		return std::count(interior.begin(), interior.end(), '_') == 0;
 	};
 
 	return is_help_message(ShellPrefix) || is_help_message(ProgramPrefix);

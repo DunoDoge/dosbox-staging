@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cassert>
 #include <fstream>
+#include <sstream>
 #include <unordered_map>
 
 #include <SDL3/SDL.h>

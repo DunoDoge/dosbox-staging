@@ -78,7 +78,12 @@ target_sources(dosboxcommon PRIVATE
   vmware.cpp
 )
 
-target_sources(dosbox PRIVATE port_containers.cpp)
+if (DOSBOX_OHOS_EMBED)
+  # No host executable; this is engine functionality and stays in the library
+  target_sources(dosboxcommon PRIVATE port_containers.cpp)
+else()
+  target_sources(dosbox PRIVATE port_containers.cpp)
+endif()
 
 target_link_libraries(dosboxcommon PRIVATE
   enet
@@ -89,8 +94,15 @@ target_link_libraries(dosboxcommon PRIVATE
   talchorus
   nuked
   plmpeg
-  PkgConfig::SPEEXDSP
 )
+
+if (DOSBOX_OHOS_EMBED)
+  # Provided by the embedding application (speex resampler built from
+  # source; OHOS has no pkg-config)
+  target_link_libraries(dosboxcommon PRIVATE speexdsp)
+else()
+  target_link_libraries(dosboxcommon PRIVATE PkgConfig::SPEEXDSP)
+endif()
 
 if (C_MANYMOUSE)
   target_link_libraries(dosboxcommon PRIVATE manymouse)

@@ -550,6 +550,16 @@ void MIXER_LockMixerThread();
 void MIXER_UnlockMixerThread();
 void MIXER_CloseAudioDevice();
 
+#if DOSBOX_OHOS_EMBED
+// HarmonyOS embed hook: pulls already-mixed stereo frames from the mixer
+// into `stereo_interleaved_dst` (interleaved left/right F32). Non-blocking;
+// any shortfall beyond what the mixer thread has produced is zero-filled.
+// Returns the number of frames actually dequeued from the mixer (the rest
+// of the buffer holds silence). Called from the embedder's audio device
+// callback thread.
+size_t MIXER_OhosDequeueOutput(float* stereo_interleaved_dst, size_t max_frames);
+#endif
+
 // Drop any leftover audio samples sitting in the capture queue between
 // recording sessions. Must be called BEFORE flipping a capture state from
 // `Off` to `Pending` so the mixer thread still sees `Off` and isn't

@@ -1031,8 +1031,9 @@ bool MOUNT::ProcessPaths(MountParameters& params, bool path_relative_to_last_con
 						const auto& geometries =
 						        BIOS_GetDiskGeometryList();
 
-						const bool is_floppy = std::ranges::any_of(
-						        geometries,
+						const bool is_floppy = std::any_of(
+						        geometries.begin(),
+						        geometries.end(),
 						        [file_size_kb](
 						                const DiskGeometry& geo) {
 							        return geo.ksize ==

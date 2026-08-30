@@ -609,13 +609,14 @@ static std::vector<std_fs::path> get_files_by_extension(
 			const auto& path = entry.path();
 			std::string ext  = path.extension().string();
 			lowcase(ext);
-			if (std::ranges::find(extensions, ext) != extensions.end()) {
+			if (std::find(extensions.begin(), extensions.end(), ext) != extensions.end()) {
 				paths.push_back(path);
 			}
 		}
 	}
 
-	std::ranges::sort(paths, [](const std_fs::path& a, const std_fs::path& b) {
+	std::sort(paths.begin(), paths.end(),
+	          [](const std_fs::path& a, const std_fs::path& b) {
 		return natural_compare(a.filename().string(), b.filename().string());
 	});
 

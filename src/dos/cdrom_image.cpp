@@ -1326,7 +1326,16 @@ bool CDROM_Interface_Image::LoadMdsFile(const char *mds_filename)
 		return false;
 	}
 
-	std::unordered_map<std_fs::path, std::shared_ptr<TrackFile>> track_map = {};
+// libc++ 15 (HarmonyOS NDK) doesn't provide the C++23 std::hash for
+// std::filesystem::path, so supply a string-based hasher.
+struct PathHash {
+	size_t operator()(const std_fs::path& path) const noexcept
+	{
+		return std::hash<std::string>()(path.string());
+	}
+};
+
+	std::unordered_map<std_fs::path, std::shared_ptr<TrackFile>, PathHash> track_map = {};
 	for (uint32_t i = 0; i < session_block->num_all_blocks; ++i) {
 		const auto track_block = read_mds_track_block(file, session_block->track_block_offset + (sizeof(MdsTrackBlock) * i));
 		if (!track_block) {

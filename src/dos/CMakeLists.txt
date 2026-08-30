@@ -63,10 +63,13 @@ target_sources(dosboxcommon PRIVATE
   programs/rescan.cpp
   programs/serial.cpp
   programs/setver.cpp
-  programs/showpic.cpp
   programs/subst.cpp
   programs/tree.cpp
 )
+
+if (OPT_SDL3_IMAGE)
+  target_sources(dosboxcommon PRIVATE programs/showpic.cpp)
+endif()
 
 # Windows-only CD-ROM ioctl backend
 if (DOSBOX_PLATFORM_WINDOWS)
@@ -83,8 +86,15 @@ if (OPT_DEBUGGER)
   target_sources(dosboxcommon PRIVATE programs/biostest.cpp)
 endif()
 
-target_sources(dosbox PRIVATE dos_files.cpp)
+if (DOSBOX_OHOS_EMBED)
+  # No host executable; this is engine functionality and stays in the library
+  target_sources(dosboxcommon PRIVATE dos_files.cpp)
+else()
+  target_sources(dosbox PRIVATE dos_files.cpp)
+endif()
 
-target_link_libraries(dosboxcommon PRIVATE
-  $<IF:$<TARGET_EXISTS:SDL3_image::SDL3_image>,SDL3_image::SDL3_image,SDL3_image::SDL3_image-static>
-)
+if (OPT_SDL3_IMAGE)
+  target_link_libraries(dosboxcommon PRIVATE
+    $<IF:$<TARGET_EXISTS:SDL3_image::SDL3_image>,SDL3_image::SDL3_image,SDL3_image::SDL3_image-static>
+  )
+endif()

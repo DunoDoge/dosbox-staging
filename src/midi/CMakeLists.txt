@@ -1,10 +1,13 @@
 target_sources(dosboxcommon PRIVATE
-  fluidsynth.cpp
   midi.cpp
   mt32.cpp
   mt32_lasynth_model.cpp
   soundcanvas.cpp
 )
+
+if (C_FLUIDSYNTH)
+  target_sources(dosboxcommon PRIVATE fluidsynth.cpp)
+endif()
 
 if (DOSBOX_PLATFORM_WINDOWS)
   # Windows-only MIDI backend
@@ -30,5 +33,9 @@ if (C_MT32EMU)
   target_link_libraries(dosboxcommon PRIVATE MT32Emu::mt32emu)
 endif()
 
-target_link_libraries(dosboxcommon PRIVATE FluidSynth::libfluidsynth clap)
+target_link_libraries(dosboxcommon PRIVATE clap)
+
+if (C_FLUIDSYNTH)
+  target_link_libraries(dosboxcommon PRIVATE FluidSynth::libfluidsynth)
+endif()
 

@@ -619,9 +619,10 @@ void Config::AppendParsedSetting(const std::string& section_name,
 int Config::GetSettingParseOrder(const std::string& section_name,
                                  const std::string& property_name)
 {
-	const auto it = std::ranges::find(parsed_settings,
-	                                  make_scoped_setting_name(section_name,
-	                                                           property_name));
+	const auto it = std::find(parsed_settings.begin(),
+	                          parsed_settings.end(),
+	                          make_scoped_setting_name(section_name,
+	                                                   property_name));
 
 	if (it == parsed_settings.end()) {
 		return -1;

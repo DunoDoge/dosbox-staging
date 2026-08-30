@@ -17,7 +17,15 @@
 #include "mverb/MVerb.h"
 #include "tal-chorus/ChorusEngine.h"
 
+#if DOSBOX_OHOS_EMBED
+// Implemented by the embedding application: starts/stops a stereo F32
+// playback stream backed by the native audio API (OHAudio).
+extern bool ohos_audio_start(int sample_rate_hz, int blocksize_in_frames);
+extern void ohos_audio_stop();
+#endif
+
 #include "private/compressor.h"
+
 
 #include "capture/capture.h"
 #include "channel_names.h"
@@ -2600,7 +2608,7 @@ static void capture_callback()
 // samples reach `final_output`, so this callback has nothing to do beyond
 // dequeuing what's available; SDL backfills any shortfall with silence.
 //
-static void SDLCALL mixer_callback([[maybe_unused]] void* userdata,
+[[maybe_unused]] static void SDLCALL mixer_callback([[maybe_unused]] void* userdata,
                                    SDL_AudioStream* stream, int bytes_requested,
                                    [[maybe_unused]] int total_bytes)
 {
@@ -3031,6 +3039,10 @@ void MIXER_CloseAudioDevice()
 		channel->Enable(false);
 	}
 
+#if DOSBOX_OHOS_EMBED
+	ohos_audio_stop();
+#endif
+
 	if (mixer.sdl_stream != nullptr) {
 		SDL_DestroyAudioStream(mixer.sdl_stream);
 		mixer.sdl_stream = nullptr;
@@ -3042,8 +3054,53 @@ void MIXER_CloseAudioDevice()
 	}
 }
 
+#if DOSBOX_OHOS_EMBED
+// ---------------------------------------------------------------------------
+// HarmonyOS embed hooks
+//
+// Implemented by the embedding application: starts/stops a stereo F32
+// playback stream backed by the native audio API (OHAudio). The engine
+// keeps producing frames into `final_output` on the mixer thread; the
+// embedder's device callback pulls them via MIXER_OhosDequeueOutput().
+// ---------------------------------------------------------------------------
+
+// `mixer.sample_rate_hz` and `mixer.blocksize` are already set from the
+// [mixer] config section by the caller.
+static bool init_ohos_sound()
+{
+	return ohos_audio_start(mixer.sample_rate_hz, mixer.blocksize);
+}
+
+// Called from the embedder's audio device callback thread. Non-blocking,
+// same semantics as the SDL playback callback: dequeues whatever the mixer
+// thread has produced and zero-fills any shortfall with silence.
+size_t MIXER_OhosDequeueOutput(float* stereo_interleaved_dst, size_t max_frames)
+{
+	if (max_frames == 0) {
+		return 0;
+	}
+
+	static std::vector<AudioFrame> output = {};
+
+	const auto frames_to_dequeue = std::min(mixer.final_output.Size(),
+	                                        max_frames);
+	const auto frames_received = mixer.final_output.BulkDequeue(output,
+	                                                           frames_to_dequeue);
+
+	for (size_t i = 0; i < frames_received; ++i) {
+		stereo_interleaved_dst[2 * i + 0] = output[i].left;
+		stereo_interleaved_dst[2 * i + 1] = output[i].right;
+	}
+	for (size_t i = frames_received; i < max_frames; ++i) {
+		stereo_interleaved_dst[2 * i + 0] = 0.0f;
+		stereo_interleaved_dst[2 * i + 1] = 0.0f;
+	}
+	return frames_received;
+}
+#endif // DOSBOX_OHOS_EMBED
+
 // Sets `mixer.sample_rate_hz` and `mixer.blocksize` on success
-static bool init_sdl_sound(const int requested_sample_rate_hz,
+[[maybe_unused]] static bool init_sdl_sound(const int requested_sample_rate_hz,
                            const std::optional<int> requested_blocksize_in_frames)
 {
 	SDL_AudioSpec desired  = {};
@@ -3250,6 +3307,13 @@ void MIXER_Init()
 		set_no_sound();
 
 	} else {
+#if DOSBOX_OHOS_EMBED
+		if (init_ohos_sound()) {
+			mixer.final_output.Start();
+		} else {
+			set_no_sound();
+		}
+#else
 		if (init_sdl_sound(sample_rate, blocksize)) {
 
 			mixer.final_output.Start();
@@ -3264,6 +3328,7 @@ void MIXER_Init()
 		} else {
 			set_no_sound();
 		}
+#endif
 	}
 
 	const auto requested_prebuffer_ms = section->GetInt("prebuffer");

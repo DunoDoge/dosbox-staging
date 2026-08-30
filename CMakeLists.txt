@@ -173,8 +173,21 @@ elseif (APPLE)
 elseif (LINUX)
   set(DOSBOX_PLATFORM_LINUX ON)
 
+elseif (CMAKE_SYSTEM_NAME STREQUAL "OHOS")
+  # HarmonyOS / OpenHarmony (musl libc, generic POSIX userland). The host
+  # GUI is provided by the embedding application (DOSBOX_OHOS_EMBED);
+  # SDL runs with its dummy video/audio drivers as a platform shim.
+  set(DOSBOX_PLATFORM_OHOS ON)
+
 else()
   message(FATAL_ERROR "Unknown system ${CMAKE_SYSTEM_NAME}")
+endif()
+
+option(DOSBOX_OHOS_EMBED
+  "Build as an embeddable static library for HarmonyOS (no host executable)"
+  OFF)
+if (DOSBOX_OHOS_EMBED AND NOT DOSBOX_PLATFORM_OHOS)
+  message(FATAL_ERROR "DOSBOX_OHOS_EMBED requires an OHOS build")
 endif()
 
 # Sanitizers
@@ -343,6 +356,22 @@ if (OPT_MT32EMU)
   find_package(MT32Emu REQUIRED)
 endif()
 
+option(OPT_FLUIDSYNTH "Enable FluidSynth MIDI synthesizer" ON)
+if (OPT_FLUIDSYNTH)
+  set(C_FLUIDSYNTH ON)
+  find_package(FluidSynth REQUIRED CONFIG)
+endif()
+
+option(OPT_SDL3_IMAGE "Enable SDL3_image (ShowPic image viewer program)" ON)
+if (OPT_SDL3_IMAGE)
+  find_package(SDL3_image CONFIG REQUIRED)
+endif()
+
+option(OPT_OPUS "Enable the Opus audio decoder (CD-DA Opus tracks)" ON)
+if (OPT_OPUS)
+  set(C_OPUS ON)
+endif()
+
 if (OPT_DEBUGGER)
   set(C_DEBUGGER ON)
 
@@ -443,29 +472,36 @@ set(version      "${PROJECT_VERSION}")
 
 # PkgConfig is needed for speexdsp (no cmake config in vcpkg) and
 # for zlib-ng detection on system-libs builds.
-find_package(PkgConfig REQUIRED)
+if (DOSBOX_OHOS_EMBED)
+  # The embedding application provides the speex resampler as a plain
+  # CMake target named `speexdsp`; zlib comes from the OHOS sysroot.
+  find_package(ZLIB REQUIRED)
+  set(ZMBV_ZLIB_TARGET ZLIB::ZLIB)
+else()
+  find_package(PkgConfig REQUIRED)
 
-# Detect zlib-ng (preferred) or plain zlib for the ZMBV video codec.
-#
-# On vcpkg builds, zlib-ng is always available (listed in vcpkg.json).
-# On system-libs builds (Linux), try zlib-ng first, fall back to plain zlib.
-# C_ZLIB_NG controls whether the native zlib-ng API (zlib-ng.h, zng_*)
-# or the standard zlib API (zlib.h) is used in the ZMBV codec.
-if (USE_SYSTEM_LIBS)
-  pkg_check_modules(ZLIB_NG IMPORTED_TARGET zlib-ng)
+  # Detect zlib-ng (preferred) or plain zlib for the ZMBV video codec.
+  #
+  # On vcpkg builds, zlib-ng is always available (listed in vcpkg.json).
+  # On system-libs builds (Linux), try zlib-ng first, fall back to plain zlib.
+  # C_ZLIB_NG controls whether the native zlib-ng API (zlib-ng.h, zng_*)
+  # or the standard zlib API (zlib.h) is used in the ZMBV codec.
+  if (USE_SYSTEM_LIBS)
+    pkg_check_modules(ZLIB_NG IMPORTED_TARGET zlib-ng)
 
-  if (ZLIB_NG_FOUND)
+    if (ZLIB_NG_FOUND)
+      set(C_ZLIB_NG ON)
+      set(ZMBV_ZLIB_TARGET PkgConfig::ZLIB_NG)
+    else()
+      find_package(ZLIB REQUIRED)
+      set(ZMBV_ZLIB_TARGET ZLIB::ZLIB)
+    endif()
+
+  else() # vcpkg path
+    find_package(zlib-ng CONFIG REQUIRED)
     set(C_ZLIB_NG ON)
-    set(ZMBV_ZLIB_TARGET PkgConfig::ZLIB_NG)
-  else()
-    find_package(ZLIB REQUIRED)
-    set(ZMBV_ZLIB_TARGET ZLIB::ZLIB)
+    set(ZMBV_ZLIB_TARGET zlib-ng::zlib)
   endif()
-
-else() # vcpkg path
-  find_package(zlib-ng CONFIG REQUIRED)
-  set(C_ZLIB_NG ON)
-  set(ZMBV_ZLIB_TARGET zlib-ng::zlib)
 endif()
 
 configure_file(
@@ -485,21 +521,28 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
 
 # Find common external dependencies
 find_package(SDL3 REQUIRED CONFIG REQUIRED COMPONENTS SDL3)
-find_package(SDL3_image CONFIG REQUIRED)
 find_package(iir REQUIRED)
 find_package(PNG REQUIRED)
-find_package(OpenGL REQUIRED)
-find_package(FluidSynth REQUIRED CONFIG)
+if (OPT_OPENGL)
+  find_package(OpenGL REQUIRED)
+endif()
+if (OPT_FLUIDSYNTH)
+  find_package(FluidSynth REQUIRED CONFIG)
+endif()
 if (C_ALSA)
   find_package(ALSA REQUIRED)
 endif()
 
 # SpeexDSP: vcpkg has no cmake config, only a .pc file
-pkg_check_modules(SPEEXDSP REQUIRED IMPORTED_TARGET speexdsp)
+if (NOT DOSBOX_OHOS_EMBED)
+  pkg_check_modules(SPEEXDSP REQUIRED IMPORTED_TARGET speexdsp)
+endif()
 
-add_executable(dosbox src/main.cpp src/dosbox.cpp)
-if (OPT_DEBUGGER)
-  set_target_properties(dosbox PROPERTIES OUTPUT_NAME dosbox_with_debugger)
+if (NOT DOSBOX_OHOS_EMBED)
+  add_executable(dosbox src/main.cpp src/dosbox.cpp)
+  if (OPT_DEBUGGER)
+    set_target_properties(dosbox PROPERTIES OUTPUT_NAME dosbox_with_debugger)
+  endif()
 endif()
 
 # Bundle licenses, but skip the ones that are not relevant for
@@ -549,6 +592,15 @@ target_include_directories(project_headers INTERFACE
 add_library(dosboxcommon STATIC)
 target_link_libraries(dosboxcommon PUBLIC project_headers)
 
+if (DOSBOX_OHOS_EMBED)
+  # The engine is linked into the embedding application's shared library;
+  # the module init/teardown code (normally part of the executable) and the
+  # host GUI (GFX_*) are provided by the embedder. The macro is PUBLIC so
+  # the embedder's own sources see the embed hooks in the public headers.
+  target_compile_definitions(dosboxcommon PUBLIC DOSBOX_OHOS_EMBED)
+  target_sources(dosboxcommon PRIVATE src/dosbox.cpp)
+endif()
+
 
 # Add tests before src so that the dosbox_tests target is
 # available for target_sources()
@@ -578,14 +630,21 @@ target_link_libraries(dosboxcommon PRIVATE
   decoders
 )
 
-target_link_libraries(dosbox PRIVATE
-  dosboxcommon
-  SDL3::Headers
-)
+if (DOSBOX_OHOS_EMBED)
+  # The embedder needs the same public surface the executable got:
+  # engine sources plus SDL3 headers (the embedder's GUI implements
+  # the GFX_ interface on top of SDL events).
+  target_link_libraries(dosboxcommon PUBLIC SDL3::Headers)
+else()
+  target_link_libraries(dosbox PRIVATE
+    dosboxcommon
+    SDL3::Headers
+  )
 
-# Export dynamic symbols so loguru's stack traces can resolve names
-if (HAS_STACK_INCLUDES)
-  target_link_options(dosbox PRIVATE "-rdynamic")
+  # Export dynamic symbols so loguru's stack traces can resolve names
+  if (HAS_STACK_INCLUDES)
+    target_link_options(dosbox PRIVATE "-rdynamic")
+  endif()
 endif()
 
 # Remove MkDocs source-tree caches (website/.cache, __pycache__, site)

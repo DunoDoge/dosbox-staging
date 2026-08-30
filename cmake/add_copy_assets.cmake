@@ -61,6 +61,8 @@ function(add_copy_assets)
 
   # Add a target to copy the assets to the build directory
   add_custom_target(copy_assets ALL DEPENDS ${ASSET_DESTINATION_FILES})
-  add_dependencies(dosbox copy_assets)
+  if (NOT DOSBOX_OHOS_EMBED)
+    add_dependencies(dosbox copy_assets)
+  endif()
 
 endfunction()

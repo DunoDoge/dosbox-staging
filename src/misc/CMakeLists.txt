@@ -39,9 +39,20 @@ elseif (DOSBOX_PLATFORM_LINUX)
 
   # Linux-only locale detection
   target_sources(dosboxcommon PRIVATE host_locale_linux.cpp)
+
+elseif (DOSBOX_PLATFORM_OHOS)
+  # OHOS is a generic POSIX (musl) platform; environment-variable based
+  # locale detection works there as well
+  target_sources(dosboxcommon PRIVATE fs_utils_posix.cpp)
+  target_sources(dosboxcommon PRIVATE host_locale_linux.cpp)
 endif()
 
-target_sources(dosbox PRIVATE messages.cpp)
+if (DOSBOX_OHOS_EMBED)
+  # No host executable; messages.cpp is part of the embeddable library
+  target_sources(dosboxcommon PRIVATE messages.cpp)
+else()
+  target_sources(dosbox PRIVATE messages.cpp)
+endif()
 
 if (OPT_TESTS)
   target_sources(dosbox_tests PRIVATE messages_stubs.cpp)

@@ -59,9 +59,9 @@ void MEM::Run()
 	                                        has_option_xms,
 	                                        has_option_ems};
 
-	const auto num_selected = std::ranges::count_if(all_selected.begin(),
-	                                                all_selected.end(),
-	                                                [](bool v) { return v; });
+	const auto num_selected = std::count_if(all_selected.begin(),
+	                                        all_selected.end(),
+	                                        [](bool v) { return v; });
 
 	std::string tmp = {};
 	if (num_selected > 1 || cmd->FindStringBegin("/m:", tmp) ||

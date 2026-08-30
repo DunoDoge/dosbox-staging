@@ -80,6 +80,12 @@
 // Define to 1 to enable MT-32 emulator
 #cmakedefine01 C_MT32EMU
 
+// Define to 1 to enable the FluidSynth MIDI synthesizer
+#cmakedefine01 C_FLUIDSYNTH
+
+// Define to 1 to enable the Opus audio decoder (CD-DA Opus tracks)
+#cmakedefine01 C_OPUS
+
 // Define to 1 to enable mouse mapping support
 #cmakedefine01 C_MANYMOUSE
 
