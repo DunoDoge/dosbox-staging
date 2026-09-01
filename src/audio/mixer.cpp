@@ -3088,10 +3088,21 @@ size_t MIXER_OhosDequeueOutput(float* stereo_interleaved_dst, size_t max_frames)
 		return 0;
 	}
 
+	// Zero-fill upfront: when the mixer queue is dry (e.g. before the
+	// mixer thread started or right after a stop), dequeue nothing and
+	// hand back a full buffer of silence -- BulkDequeue would assert on a
+	// zero-sized target.
+	std::fill(stereo_interleaved_dst,
+	          stereo_interleaved_dst + max_frames * 2,
+	          0.0f);
+
 	static std::vector<AudioFrame> output = {};
 
 	const auto frames_to_dequeue = std::min(mixer.final_output.Size(),
 	                                        max_frames);
+	if (frames_to_dequeue == 0) {
+		return 0;
+	}
 	const auto frames_received = mixer.final_output.BulkDequeue(output,
 	                                                           frames_to_dequeue);
 
@@ -3349,6 +3360,11 @@ void MIXER_Init()
 
 	// One second of audio
 	mixer.capture_queue.Resize(mixer.sample_rate_hz * 2);
+
+	// Embed-mode re-init: `MIXER_CloseAudioDevice()` latched this flag to
+	// stop the previous run's thread; clear it or the freshly spawned
+	// thread below exits immediately and the pause fade never completes.
+	mixer.thread_should_quit = false;
 
 	mixer.thread = std::thread(mixer_thread_loop);
 	set_thread_name(mixer.thread, "dosbox:mixer");
